@@ -85,6 +85,90 @@ npm install
 npm run dev
 ```
 
+## AWS Deployment
+
+The application can be deployed to AWS using CDK (Infrastructure as Code), ECS Fargate (backend), Amplify (frontend), and RDS PostgreSQL.
+
+### Prerequisites
+
+- [AWS CLI](https://aws.amazon.com/cli/) configured with administrator credentials
+- [AWS CDK](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html) (`npm install -g aws-cdk && cdk bootstrap`)
+- [Node.js 22+](https://nodejs.org/)
+- [Docker](https://www.docker.com/) (for building the backend image locally to verify)
+- A [GitHub](https://github.com) repository connected to this codebase
+
+### Step 1: Deploy infrastructure
+
+```bash
+cd infra
+npm install
+cdk deploy --all
+```
+
+This provisions all AWS resources: VPC with public/private subnets, ECR repository, ECS Fargate cluster and service, RDS PostgreSQL 16.4, Application Load Balancer, and Secrets Manager. After deployment, CDK prints the following outputs:
+
+| CfnOutput          | Use for                          |
+|--------------------|----------------------------------|
+| `EcrRepoUri`       | GitHub Secret `ECR_REPOSITORY`   |
+| `EcsClusterName`   | GitHub Secret `ECS_CLUSTER`      |
+| `EcsServiceName`   | GitHub Secret `ECS_SERVICE`      |
+| `TaskDefFamily`    | GitHub Secret `ECS_TASK_DEF_FAMILY` |
+| `AlbDnsName`       | Amplify env var `VITE_API_URL`   |
+
+### Step 2: Fill the OpenAI API key
+
+Go to AWS Console > Secrets Manager, locate the secret created by the CDK, and edit the `OPENAI_API_KEY` field with your actual key.
+
+### Step 3: Set up GitHub OIDC and secrets
+
+1. Create an OIDC provider in IAM (AWS > IAM > Identity Providers > Add provider > OpenID Connect, URL: `https://token.actions.githubusercontent.com`, audience: `sts.amazonaws.com`).
+2. Create an IAM role with a trust policy for the GitHub OIDC provider, scoped to your repository. Attach the permissions listed in `docs/prd/001-aws-deployment.md` (module 2, line 96).
+3. Add the role ARN as `AWS_ROLE_ARN` in GitHub repository Secrets.
+4. Copy each CfnOutput value from Step 1 into the corresponding GitHub Secret.
+
+### Step 4: Connect Amplify
+
+1. Go to AWS Amplify Console > New app > Host web app > GitHub, and select this repository.
+2. Amplify auto-detects `amplify.yml` at the repository root.
+3. In the Amplify app settings, add `VITE_API_URL` as an environment variable set to `http://<AlbDnsName>` (from Step 1).
+
+The frontend will rebuild and deploy automatically when `main` changes. The CI/CD pipeline (`.github/workflows/deploy.yml`) will build and deploy the backend when a PR to `main` is merged with changes under `backend/`.
+
+### Estimated monthly cost
+
+| Resource            | Approx. cost |
+|---------------------|--------------|
+| RDS (db.t4g.micro)  | ~$15/mo      |
+| ECS Fargate (0.25 vCPU / 0.5 GB) | ~$15/mo |
+| Application Load Balancer | ~$20/mo |
+| Secrets Manager     | ~$0.50/mo    |
+| CloudWatch Logs     | ~$2-5/mo     |
+| Amplify (free tier) | $0           |
+| **Total**           | **~$50-70/mo** |
+
+### Architecture diagram
+
+```
+Internet
+  │
+  ├─ :443 ──► ALB (public) ──► Fargate (public subnet, :8000)
+  │               │                    │
+  │               │                    ├─► ECR (Docker image)
+  │               │                    ├─► Secrets Manager (DB URL, JWT, OpenAI key)
+  │               │                    └─► RDS (private subnet, :5432)
+  │
+  └─ CDN ──► Amplify ──► frontend/dist/
+                 │
+                 └─► VITE_API_URL ──► ALB DNS
+```
+
+### Tear down
+
+```bash
+cd infra
+cdk destroy --all
+```
+
 ## Architecture
 
 ```

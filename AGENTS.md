@@ -24,6 +24,12 @@ AI Study Planner: Monorepo with a Python 3.12/FastAPI backend and React 18/TypeS
 - See `frontend/AGENTS.md` for `npm` commands, build steps, and UI component structure.
 </important>
 
+<important if="you are working on infrastructure or CI/CD tasks">
+- See `infra/AGENTS.md` for CDK commands (synth, deploy, diff, destroy), CI/CD pipeline details, and Amplify configuration.
+- See `docs/prd/001-aws-deployment.md` for the full specification of all deployment modules.
+- See `docs/adr/` for architecture decisions (Fargate in public subnets, single Dockerfile, OIDC CI/CD pipeline).
+</important>
+
 <important if="you need to understand or integrate with the REST API">
 - See `README.md` for an overview of the API endpoints.
 </important>
