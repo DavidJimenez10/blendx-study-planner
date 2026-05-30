@@ -44,11 +44,11 @@ export class AppStack extends cdk.Stack {
     });
     rdsSg.addIngressRule(fargateSg, ec2.Port.tcp(5432), 'Allow PostgreSQL from Fargate');
 
-    // ── RDS — PostgreSQL 16.4 ──
+    // ── RDS — PostgreSQL 16.13 ──
 
     const dbInstance = new rds.DatabaseInstance(this, 'Database', {
       engine: rds.DatabaseInstanceEngine.postgres({
-        version: rds.PostgresEngineVersion.VER_16_4,
+        version: rds.PostgresEngineVersion.VER_16_13,
       }),
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MICRO),
       vpc,
