@@ -27,3 +27,17 @@ AI Study Planner: Monorepo with a Python 3.12/FastAPI backend and React 18/TypeS
 <important if="you need to understand or integrate with the REST API">
 - See `README.md` for an overview of the API endpoints.
 </important>
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues en `DavidJimenez10/blendx-study-planner` via `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Solo se usan `needs-info` y `ready-for-agent`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Multi-context: `CONTEXT-MAP.md` en la raíz apunta a `CONTEXT.md` por cada contexto (`backend/`, `frontend/`). See `docs/agents/domain.md`.
