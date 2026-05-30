@@ -236,7 +236,22 @@ export class AppStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'EcrRepoUri', {
       value: repository.repositoryUri,
-      description: 'ECR repository URI',
+      description: 'ECR repository URI — set as ECR_REPOSITORY secret in GitHub',
+    });
+
+    new cdk.CfnOutput(this, 'EcsClusterName', {
+      value: cluster.clusterName,
+      description: 'ECS cluster name — set as ECS_CLUSTER secret in GitHub',
+    });
+
+    new cdk.CfnOutput(this, 'EcsServiceName', {
+      value: fargateService.serviceName,
+      description: 'ECS service name — set as ECS_SERVICE secret in GitHub',
+    });
+
+    new cdk.CfnOutput(this, 'TaskDefFamily', {
+      value: taskDefinition.family,
+      description: 'Task definition family — set as ECS_TASK_DEF_FAMILY secret in GitHub',
     });
 
     new cdk.CfnOutput(this, 'AppSecretArn', {
