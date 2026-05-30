@@ -170,7 +170,8 @@ export class AppStack extends cdk.Stack {
     ]);
 
     taskDefinition.addContainer('AppContainer', {
-      image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
+      //image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
+      image: ecs.ContainerImage.fromRegistry('amazon/amazon-ecs-sample'),
       logging: ecs.LogDrivers.awsLogs({ streamPrefix: 'blendx', logGroup, mode: ecs.AwsLogDriverMode.BLOCKING }),
       environment: {
         DATABASE_URL: databaseUrl,
