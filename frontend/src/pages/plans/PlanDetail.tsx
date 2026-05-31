@@ -22,6 +22,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, type StudyTask } from "../../api/client";
+import ChatPanel from "../../components/document/ChatPanel";
+import DocumentUpload from "../../components/document/DocumentUpload";
 import AddTaskModal from "../../components/task/AddTaskModal";
 import TaskItem from "../../components/task/TaskItem";
 import styles from "./PlanDetail.module.css";
@@ -89,12 +91,16 @@ export default function PlanDetail() {
     },
   });
 
-  const completedCount = tasks.filter((t) => t.completed).length;
+  let completedCount = 0;
+  let totalHours = 0;
+  for (const t of tasks) {
+    if (t.completed) completedCount++;
+    totalHours += t.estimated_hours;
+  }
   const totalCount = tasks.length;
   const isComplete = totalCount > 0 && completedCount === totalCount;
   const progressPct =
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-  const totalHours = tasks.reduce((s, t) => s + t.estimated_hours, 0);
 
   if (planLoading) {
     return (
@@ -295,6 +301,14 @@ export default function PlanDetail() {
               )}
             </>
           )}
+        </div>
+
+        <div className={styles.documentsSection}>
+          <Title order={4} className={styles.sectionTitle}>
+            Documents &amp; Chat
+          </Title>
+          <DocumentUpload planId={id} />
+          <ChatPanel planId={id} />
         </div>
       </main>
 

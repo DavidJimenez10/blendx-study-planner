@@ -2,16 +2,32 @@ const BASE = import.meta.env.VITE_API_URL || "/api";
 
 export type TokenPayload = { sub: string; name: string; exp: number };
 
+let cachedToken: string | null = null;
+
+const TOKEN_KEY = "token:v1";
+
 export function getToken(): string | null {
-  return localStorage.getItem("token");
+  try {
+    const token = localStorage.getItem(TOKEN_KEY);
+    cachedToken = token;
+    return token;
+  } catch {
+    return cachedToken;
+  }
 }
 
 export function setToken(token: string): void {
-  localStorage.setItem("token", token);
+  try {
+    localStorage.setItem(TOKEN_KEY, token);
+  } catch {}
+  cachedToken = token;
 }
 
 export function clearToken(): void {
-  localStorage.removeItem("token");
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+  } catch {}
+  cachedToken = null;
 }
 
 export function getTokenPayload(): TokenPayload | null {
@@ -37,6 +53,22 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     ...init,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
+
+async function uploadFile<T>(path: string, file: File): Promise<T> {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: formData,
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json() as Promise<T>;
@@ -69,6 +101,26 @@ export type AuthResponse = {
   access_token: string;
   token_type: string;
   user: User;
+};
+
+export type PlanDocument = {
+  id: number;
+  plan_id: number;
+  filename: string;
+  file_type: string;
+  file_size: number;
+  chunk_count: number;
+  created_at: string;
+};
+
+export type ChatSource = {
+  filename: string;
+  content: string;
+};
+
+export type ChatResponse = {
+  answer: string;
+  sources: ChatSource[];
 };
 
 export const api = {
@@ -131,5 +183,22 @@ export const api = {
     req<GenerateTasksResponse>(`/plans/${planId}/generate-tasks`, {
       method: "POST",
       body: JSON.stringify({ max_tasks: maxTasks ?? null }),
+    }),
+
+  uploadDocument: (planId: number, file: File) =>
+    uploadFile<PlanDocument>(`/plans/${planId}/documents`, file),
+
+  getDocuments: (planId: number) =>
+    req<PlanDocument[]>(`/plans/${planId}/documents`),
+
+  deleteDocument: (planId: number, documentId: number) =>
+    req<void>(`/plans/${planId}/documents/${documentId}`, {
+      method: "DELETE",
+    }),
+
+  chat: (planId: number, question: string) =>
+    req<ChatResponse>(`/plans/${planId}/chat`, {
+      method: "POST",
+      body: JSON.stringify({ question }),
     }),
 };

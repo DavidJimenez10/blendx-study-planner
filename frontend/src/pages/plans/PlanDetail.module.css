@@ -206,6 +206,22 @@
   color: var(--c-cool-gray);
 }
 
+/* Documents & Chat section */
+.documentsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sectionTitle {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-cool-gray);
+}
+
 /* Completed plan card */
 .planCardComplete {
   border-color: rgba(32, 201, 151, 0.35);
