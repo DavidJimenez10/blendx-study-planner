@@ -58,6 +58,13 @@ export type StudyTask = {
   estimated_hours: number;
   completed: boolean;
 };
+export type GenerateTasksResponse = {
+  tasks: StudyTask[];
+  total_estimated_hours: number;
+  hours_match: boolean;
+  warning: string | null;
+  failed_generations: { title: string; estimated_hours: number; reason: string }[];
+};
 export type AuthResponse = {
   access_token: string;
   token_type: string;
@@ -118,5 +125,11 @@ export const api = {
     req<StudyTask>(`/plans/${planId}/tasks/${taskId}`, {
       method: "PATCH",
       body: JSON.stringify({ completed }),
+    }),
+
+  generateTasks: (planId: number, maxTasks?: number) =>
+    req<GenerateTasksResponse>(`/plans/${planId}/generate-tasks`, {
+      method: "POST",
+      body: JSON.stringify({ max_tasks: maxTasks ?? null }),
     }),
 };
