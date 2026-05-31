@@ -1,6 +1,6 @@
 import pytest
 
-from app.schemas.task_generation import FailedGeneration, GeneratedTask
+from app.schemas.task_generation import GeneratedTask
 
 
 @pytest.fixture

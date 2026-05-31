@@ -1,5 +1,6 @@
 from typing import Generator
 
+import pgvector.sqlalchemy  # noqa: F401 — register pgvector type
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 

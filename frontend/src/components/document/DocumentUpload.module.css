@@ -1,0 +1,92 @@
+.loader {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2rem;
+  border: 1px dashed rgba(49, 69, 80, 0.5);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.emptyText {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  color: var(--c-cool-gray);
+  max-width: 320px;
+  line-height: 1.5;
+}
+
+.fileInput {
+  display: none;
+}
+
+.docList {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(0, 237, 237, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.docRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid rgba(0, 237, 237, 0.06);
+  transition: background 0.12s;
+}
+
+.docRow:last-child {
+  border-bottom: none;
+}
+
+.docRow:hover {
+  background: rgba(0, 237, 237, 0.04);
+}
+
+.docInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.docName {
+  font-family: var(--font);
+  font-size: 0.85rem;
+  color: var(--c-white);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docMeta {
+  font-family: var(--font);
+  font-size: 0.7rem;
+  color: var(--c-cool-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.uploadRow {
+  display: flex;
+  justify-content: center;
+  padding-top: 0.75rem;
+}
+
+.error {
+  font-family: var(--font);
+  font-size: 0.8rem;
+  color: var(--c-danger, #ff6b6b);
+  margin-top: 0.5rem;
+  text-align: center;
+}

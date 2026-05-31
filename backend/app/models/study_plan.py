@@ -18,3 +18,9 @@ class StudyPlan(Base):
     tasks = relationship(
         "StudyTask", back_populates="plan", cascade="all, delete-orphan"
     )
+    documents = relationship(
+        "PlanDocument", back_populates="plan", cascade="all, delete-orphan"
+    )
+    chunks = relationship(
+        "DocumentChunk", back_populates="plan", cascade="all, delete-orphan"
+    )

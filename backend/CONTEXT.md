@@ -59,3 +59,19 @@ _Avoid_: AI model, GPT, chatbot
 **max_tasks**:
 An optional integer parameter on the generate-tasks request that caps the number of tasks the LLM may produce. When omitted, the LLM autonomously decides the task count.
 _Avoid_: task_limit, count, num_tasks
+
+### Plan Documents
+
+**Plan Document**:
+A file (PDF, TXT, MD) uploaded by a user and associated with a Study Plan. The original file is not persisted — only its extracted text, split into chunks, is stored as Document Chunks.
+_Avoid_: Attachment, resource, file upload, material
+
+**Document Chunk**:
+A semantic fragment of text extracted from a Plan Document, stored with its embedding vector and metadata (document source, plan_id, position). Used as context for Document Chat queries.
+_Avoid_: Segment, block, fragment, passage
+
+### Document Chat
+
+**Document Chat**:
+A stateless question-answering endpoint (`POST /plans/{id}/chat`) that searches a plan's Document Chunks for relevant context, passes it to the LLM, and returns an answer grounded in the uploaded documents. Each request is independent — no conversation history is maintained. If no relevant information is found in the documents, it returns a polite fallback message instead of fabricating an answer.
+_Avoid_: RAG chat, document Q&A, AI chat
