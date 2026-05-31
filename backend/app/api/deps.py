@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 from ..clients.openai_client import OpenAIClient
 from ..core.config import settings
 from ..core.database import get_db
+from ..services.chat_service import ChatService
+from ..services.document_service import DocumentService
 from ..services.generation_service import GenerationService
 from ..services.plan_service import PlanService
 from ..services.task_service import TaskService
@@ -35,8 +37,24 @@ def get_generation_service(
     return GenerationService(db, openai_client)
 
 
+def get_document_service(
+    db: Session = Depends(get_db),
+    openai_client: OpenAIClient = Depends(get_openai_client),
+) -> DocumentService:
+    return DocumentService(db, openai_client)
+
+
+def get_chat_service(
+    db: Session = Depends(get_db),
+    openai_client: OpenAIClient = Depends(get_openai_client),
+) -> ChatService:
+    return ChatService(db, openai_client)
+
+
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
 PlanServiceDep = Annotated[PlanService, Depends(get_plan_service)]
 TaskServiceDep = Annotated[TaskService, Depends(get_task_service)]
 OpenAIClientDep = Annotated[OpenAIClient, Depends(get_openai_client)]
 GenerationServiceDep = Annotated[GenerationService, Depends(get_generation_service)]
+DocumentServiceDep = Annotated[DocumentService, Depends(get_document_service)]
+ChatServiceDep = Annotated[ChatService, Depends(get_chat_service)]

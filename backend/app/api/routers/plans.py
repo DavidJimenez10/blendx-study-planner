@@ -1,11 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 from ...schemas.study_plan import StudyPlanCreate, StudyPlanRead, StudyPlanUpdate
 from ...schemas.study_task import StudyTaskCreate, StudyTaskRead, StudyTaskUpdate
 from ...schemas.task_generation import GenerateTasksRequest, GenerateTasksResponse
-from ...services.generation_service import GenerationService
-from ...services.plan_service import PlanService
-from ...services.task_service import TaskService
 from ..deps import (
     GenerationServiceDep,
     PlanServiceDep,
