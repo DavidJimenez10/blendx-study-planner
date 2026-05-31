@@ -1,0 +1,8 @@
+# CI/CD pipeline with GitHub OIDC and double-tag strategy
+
+The backend deployment pipeline triggers on `pull_request.closed + merged == true` targeting `main` when files under `backend/` change — instead of `push to main` — so that only reviewed code reaches production. GitHub Actions authenticates to AWS via OIDC (`AssumeRoleWithWebIdentity`) instead of long-lived IAM access keys, eliminating credential rotation from the repository. Docker images are tagged with both the commit SHA (for traceability to a specific commit) and `latest` (so the initial CDK task definition always resolves an image). The pipeline is split into two jobs: `build-and-push` (checkout, OIDC auth, ECR login, Docker build+push) and `deploy` (describe current task definition, register a new revision with the SHA-tagged image, force a new ECS deployment). Keeping them separate ensures a push failure does not block a subsequent deployment of an already-built image.
+
+**Alternatives considered:**
+- **IAM access keys**: Rejected. Storing long-lived credentials in GitHub Secrets creates a rotation burden and expands the blast radius if leaked. OIDC issues short-lived tokens scoped to a single workflow run.
+- **`push to main` trigger**: Rejected. A direct push bypasses PR review and could deploy unreviewed code. The `pull_request.closed + merged` trigger ensures every deployment has passed a PR review.
+- **Single `latest` tag only**: Rejected. Without a SHA-pinned tag, rolling back requires finding the correct image digest manually. The double-tag keeps `latest` working for fresh CDK deployments while giving each revision a precise pointer.

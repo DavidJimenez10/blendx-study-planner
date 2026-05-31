@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -12,11 +14,14 @@ def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
     return AuthService(db)
 
 
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+
+
 @router.post("/register", response_model=TokenResponse, status_code=201)
-def register(data: RegisterInput, svc: AuthService = Depends(get_auth_service)):
+def register(data: RegisterInput, svc: AuthServiceDep):
     return svc.register(data)
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(data: LoginInput, svc: AuthService = Depends(get_auth_service)):
+def login(data: LoginInput, svc: AuthServiceDep):
     return svc.login(data)

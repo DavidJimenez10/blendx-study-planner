@@ -3,6 +3,7 @@ import {
   Button,
   Group,
   Loader,
+  Menu,
   Progress,
   Text,
   Title,
@@ -14,9 +15,11 @@ import {
   IconCircleCheck,
   IconClock,
   IconPlus,
+  IconSparkles,
   IconTarget,
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, type StudyTask } from "../../api/client";
 import AddTaskModal from "../../components/task/AddTaskModal";
@@ -39,6 +42,8 @@ export default function PlanDetail() {
 
   const [addTaskOpened, { open: openAddTask, close: closeAddTask }] =
     useDisclosure(false);
+
+  const [genWarning, setGenWarning] = useState<string | null>(null);
 
   const { data: plan, isLoading: planLoading } = useQuery({
     queryKey: ["plan", id],
@@ -63,6 +68,24 @@ export default function PlanDetail() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["tasks", id] });
       qc.invalidateQueries({ queryKey: ["taskStats"] });
+    },
+  });
+
+  const generateTasks = useMutation({
+    mutationFn: () => api.generateTasks(id),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["tasks", id] });
+      setGenWarning(null);
+      if (data.warning) {
+        setGenWarning(data.warning);
+      } else if (data.failed_generations.length > 0) {
+        setGenWarning(
+          `${data.tasks.length} task(s) created, ${data.failed_generations.length} failed validation.`,
+        );
+      }
+    },
+    onError: (error: Error) => {
+      setGenWarning(error.message || "Generation failed");
     },
   });
 
@@ -166,55 +189,111 @@ export default function PlanDetail() {
                   {totalHours}h total
                 </Badge>
               )}
-              <Button
-                leftSection={<IconPlus size={13} />}
-                color="cyan"
-                size="xs"
-                variant="light"
-                onClick={openAddTask}
-              >
-                Add task
-              </Button>
+              <Menu position="bottom-end" shadow="md" width={180}>
+                <Menu.Target>
+                  <Button
+                    leftSection={<IconPlus size={13} />}
+                    color="cyan"
+                    size="xs"
+                    variant="light"
+                  >
+                    Add task
+                  </Button>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Item
+                    leftSection={<IconPlus size={14} />}
+                    onClick={openAddTask}
+                  >
+                    Add manually
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSection={<IconSparkles size={14} />}
+                    onClick={() => generateTasks.mutate()}
+                    disabled={!plan?.target_date || generateTasks.isPending}
+                  >
+                    {generateTasks.isPending
+                      ? "Generating\u2026"
+                      : "Generate with AI"}
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
             </Group>
           </Group>
 
-          {isComplete && (
-            <div className={styles.completionBanner}>
-              <IconCircleCheck size={20} color="var(--c-turquoise)" />
-              <div>
-                <Text className={styles.completionTitle}>
-                  All tasks complete
-                </Text>
-                <Text className={styles.completionSub}>
-                  Great work — you've finished every task in this plan.
-                </Text>
-              </div>
-            </div>
+          {genWarning && (
+            <Text
+              size="sm"
+              mb="md"
+              style={{
+                fontFamily: "var(--font)",
+                padding: "0.5rem 0.75rem",
+                borderRadius: "6px",
+                background: genWarning.includes("failed")
+                  ? "rgba(255, 184, 0, 0.08)"
+                  : "rgba(255, 184, 0, 0.08)",
+                color: genWarning.includes("Generation failed")
+                  ? "var(--c-danger, #ff6b6b)"
+                  : "var(--c-warning, #ffb800)",
+              }}
+            >
+              {genWarning}
+            </Text>
           )}
 
-          {tasksLoading ? (
+          {generateTasks.isPending ? (
             <div className={styles.loader}>
               <Loader color="cyan" size="sm" />
-            </div>
-          ) : tasks.length === 0 ? (
-            <div className={styles.emptyTasks}>
-              <IconTarget size={32} stroke={1.2} color="var(--c-cool-gray)" />
-              <Text className={styles.emptyText}>
-                No tasks yet. Break your goal into actionable steps.
+              <Text
+                size="sm"
+                c="dimmed"
+                ml="sm"
+                style={{ fontFamily: "var(--font)" }}
+              >
+                Generating tasks...
               </Text>
             </div>
           ) : (
-            <div className={styles.taskList}>
-              {tasks.map((task) => (
-                <TaskItem
-                  key={task.id}
-                  task={task}
-                  onToggle={(taskId, completed) =>
-                    toggleTask.mutate({ taskId, completed })
-                  }
-                />
-              ))}
-            </div>
+            <>
+              {isComplete && (
+                <div className={styles.completionBanner}>
+                  <IconCircleCheck size={20} color="var(--c-turquoise)" />
+                  <div>
+                    <Text className={styles.completionTitle}>
+                      All tasks complete
+                    </Text>
+                    <Text className={styles.completionSub}>
+                      Great work — you've finished every task in this plan.
+                    </Text>
+                  </div>
+                </div>
+              )}
+
+              {tasksLoading ? (
+                <div className={styles.loader}>
+                  <Loader color="cyan" size="sm" />
+                </div>
+              ) : tasks.length === 0 ? (
+                <div className={styles.emptyTasks}>
+                  <IconTarget size={32} stroke={1.2} color="var(--c-cool-gray)" />
+                  <Text className={styles.emptyText}>
+                    No tasks yet. Break your goal into actionable steps.
+                  </Text>
+                </div>
+              ) : (
+                <div className={styles.taskList}>
+                  {tasks.map((task) => (
+                    <TaskItem
+                      key={task.id}
+                      task={task}
+                      onToggle={(taskId, completed) =>
+                        toggleTask.mutate({ taskId, completed })
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
