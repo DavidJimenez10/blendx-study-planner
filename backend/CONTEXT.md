@@ -45,3 +45,17 @@ _Avoid_: Duration, effort, time required
 **Completed**:
 A boolean flag indicating whether the task is done. Toggling completion is a PATCH operation.
 _Avoid_: Done, finished, checked
+
+### Task Generation
+
+**Task Generation**:
+The process of using an LLM (Large Language Model) to automatically create Study Tasks from a Study Plan's goal, hours_per_week, and target_date. Invoked via `POST /plans/{id}/generate-tasks`.
+_Avoid_: Auto-planning, AI scheduling, smart tasks
+
+**LLM**:
+A Large Language Model (via OpenAI API) that produces structured Study Tasks given a prompt containing the plan context. Uses the `instructor` library for Pydantic-validated output.
+_Avoid_: AI model, GPT, chatbot
+
+**max_tasks**:
+An optional integer parameter on the generate-tasks request that caps the number of tasks the LLM may produce. When omitted, the LLM autonomously decides the task count.
+_Avoid_: task_limit, count, num_tasks
