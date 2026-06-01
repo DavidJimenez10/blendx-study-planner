@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "AI Study Planner backend API"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi==0.115.6",
+    "fastapi[all]==0.115.6",
     "uvicorn[standard]==0.32.1",
     "sqlalchemy==2.0.36",
     "alembic==1.14.0",
@@ -18,7 +18,11 @@ dependencies = [
     "pgvector>=0.3.6",
     "pypdf2>=3.0.1",
     "langchain-text-splitters>=0.3.0",
+    "langchain-core>=0.3.0",
+    "langchain-openai>=0.3.0",
+    "langgraph>=0.2.0",
     "python-multipart>=0.0.29",
+    "sse-starlette>=3.0.3",
 ]
 
 [dependency-groups]
@@ -27,3 +31,14 @@ dev = [
     "httpx==0.28.1",
     "pytest-mock>=3.15.1",
 ]
+
+[tool.fastapi]
+entrypoint = "app.main:app"
+
+[tool.ruff]
+lint.select = ["E", "F", "I", "FAST"]
+lint.ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
