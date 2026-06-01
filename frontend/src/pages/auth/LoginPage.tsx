@@ -9,18 +9,26 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconAlertCircle } from "@tabler/icons-react";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, setToken } from "../../api/client";
 import styles from "./LoginPage.module.css";
+
+function getAuthErrorMessage(error: Error): string {
+  try {
+    const parsed = JSON.parse(error.message);
+    return parsed.detail ?? error.message;
+  } catch {
+    return error.message;
+  }
+}
 
 type Mode = "login" | "register";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("login");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const form = useForm({
     initialValues: { name: "", password: "" },
@@ -30,27 +38,20 @@ export default function LoginPage() {
     },
   });
 
-  async function handleSubmit() {
-    setError(null);
-    setLoading(true);
-    try {
-      const res =
-        mode === "login"
-          ? await api.login(form.values.name.trim(), form.values.password)
-          : await api.register(form.values.name.trim(), form.values.password);
-      setToken(res.access_token);
+  const authMutation = useMutation({
+    mutationFn: () =>
+      mode === "login"
+        ? api.login(form.values.name.trim(), form.values.password)
+        : api.register(form.values.name.trim(), form.values.password),
+    onSuccess: (data) => {
+      setToken(data.access_token);
       navigate("/", { replace: true });
-    } catch (e: unknown) {
-      const text = e instanceof Error ? e.message : "Something went wrong";
-      try {
-        const parsed = JSON.parse(text);
-        setError(parsed.detail ?? text);
-      } catch {
-        setError(text);
-      }
-    } finally {
-      setLoading(false);
-    }
+    },
+  });
+
+  function handleSubmit() {
+    if (!form.values.name.trim() || !form.values.password) return;
+    authMutation.mutate();
   }
 
   const isLogin = mode === "login";
@@ -85,7 +86,6 @@ export default function LoginPage() {
             className={`${styles.tab} ${isLogin ? styles.tabActive : ""}`}
             onClick={() => {
               setMode("login");
-              setError(null);
               form.reset();
             }}
           >
@@ -95,7 +95,6 @@ export default function LoginPage() {
             className={`${styles.tab} ${!isLogin ? styles.tabActive : ""}`}
             onClick={() => {
               setMode("register");
-              setError(null);
               form.reset();
             }}
           >
@@ -115,14 +114,16 @@ export default function LoginPage() {
             </Text>
           </div>
 
-          {error && (
+          {authMutation.isError && (
             <Alert
               icon={<IconAlertCircle size={16} />}
               color="red"
               variant="light"
               p="sm"
             >
-              {error}
+              {authMutation.error instanceof Error
+                ? getAuthErrorMessage(authMutation.error)
+                : "Something went wrong"}
             </Alert>
           )}
 
@@ -158,7 +159,7 @@ export default function LoginPage() {
             fullWidth
             mt="xs"
             onClick={handleSubmit}
-            loading={loading}
+            loading={authMutation.isPending}
             disabled={!form.values.name.trim() || !form.values.password}
           >
             {isLogin ? "Sign in" : "Create account"}
