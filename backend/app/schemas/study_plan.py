@@ -9,6 +9,7 @@ class StudyPlanCreate(BaseModel):
     hours_per_week: float
     description: str | None = None
     target_date: date | None = None
+    constraints: str | None = None
 
 
 class StudyPlanRead(BaseModel):
@@ -18,6 +19,7 @@ class StudyPlanRead(BaseModel):
     hours_per_week: float
     description: str | None = None
     target_date: date | None = None
+    constraints: str | None = None
 
     model_config = {"from_attributes": True}
 
@@ -25,3 +27,4 @@ class StudyPlanRead(BaseModel):
 class StudyPlanUpdate(BaseModel):
     description: str | None = None
     target_date: date | None = None
+    constraints: str | None = None

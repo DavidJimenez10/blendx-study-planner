@@ -4,6 +4,7 @@ from pydantic import BaseModel
 class StudyTaskCreate(BaseModel):
     title: str
     estimated_hours: float
+    subtopic: str | None = "general"
 
 
 class StudyTaskUpdate(BaseModel):
@@ -16,5 +17,6 @@ class StudyTaskRead(BaseModel):
     title: str
     estimated_hours: float
     completed: bool
+    subtopic: str = "general"
 
     model_config = {"from_attributes": True}

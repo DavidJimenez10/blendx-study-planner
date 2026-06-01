@@ -90,6 +90,7 @@ class GenerationService:
                     StudyTaskCreate(
                         title=task.title.strip(),
                         estimated_hours=float(task.estimated_hours),
+                        subtopic="general",
                     ),
                 )
                 valid_tasks.append(StudyTaskRead.model_validate(created))
