@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String
+from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from .base import Base
@@ -13,6 +13,7 @@ class StudyPlan(Base):
     hours_per_week = Column(Float, nullable=False)
     description = Column(String, nullable=True)
     target_date = Column(Date, nullable=True)
+    constraints = Column(Text, nullable=True)
 
     user = relationship("User", back_populates="plans")
     tasks = relationship(

@@ -18,6 +18,45 @@ interface Props {
   planId: number;
 }
 
+interface UploadControlsProps {
+  fileInputRef: React.RefObject<HTMLInputElement>;
+  canUpload: boolean;
+  isPending: boolean;
+  onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  label: string;
+}
+
+function UploadControls({
+  fileInputRef,
+  canUpload,
+  isPending,
+  onFileChange,
+  label,
+}: UploadControlsProps) {
+  return (
+    <>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.txt,.md"
+        className={styles.fileInput}
+        onChange={onFileChange}
+      />
+      <Button
+        color="cyan"
+        size="xs"
+        variant="light"
+        disabled={!canUpload || isPending}
+        leftSection={isPending ? undefined : <IconFileUpload size={14} />}
+        loading={isPending}
+        onClick={() => fileInputRef.current?.click()}
+      >
+        {label}
+      </Button>
+    </>
+  );
+}
+
 export default function DocumentUpload({ planId }: Props) {
   const qc = useQueryClient();
   const fileInput = useRef<HTMLInputElement>(null);
@@ -72,26 +111,13 @@ export default function DocumentUpload({ planId }: Props) {
             Upload PDF, TXT, or MD files to ask questions about your study
             materials.
           </Text>
-          <input
-            ref={fileInput}
-            type="file"
-            accept=".pdf,.txt,.md"
-            className={styles.fileInput}
-            onChange={handleFileChange}
+          <UploadControls
+            fileInputRef={fileInput}
+            canUpload={canUpload}
+            isPending={upload.isPending}
+            onFileChange={handleFileChange}
+            label="Upload document"
           />
-          <Button
-            color="cyan"
-            size="xs"
-            variant="light"
-            disabled={!canUpload || upload.isPending}
-            leftSection={
-              upload.isPending ? undefined : <IconFileUpload size={14} />
-            }
-            loading={upload.isPending}
-            onClick={() => fileInput.current?.click()}
-          >
-            Upload document
-          </Button>
         </div>
       ) : (
         <>
@@ -118,28 +144,17 @@ export default function DocumentUpload({ planId }: Props) {
             ))}
           </div>
           <div className={styles.uploadRow}>
-            <input
-              ref={fileInput}
-              type="file"
-              accept=".pdf,.txt,.md"
-              className={styles.fileInput}
-              onChange={handleFileChange}
-            />
-            <Button
-              color="cyan"
-              size="xs"
-              variant="light"
-              disabled={!canUpload || upload.isPending}
-              leftSection={
-                upload.isPending ? undefined : <IconFileUpload size={14} />
+            <UploadControls
+              fileInputRef={fileInput}
+              canUpload={canUpload}
+              isPending={upload.isPending}
+              onFileChange={handleFileChange}
+              label={
+                canUpload
+                  ? `Upload (${documents.length}/${MAX_DOCS})`
+                  : `Limit reached (${MAX_DOCS})`
               }
-              loading={upload.isPending}
-              onClick={() => fileInput.current?.click()}
-            >
-              {canUpload
-                ? `Upload (${documents.length}/${MAX_DOCS})`
-                : `Limit reached (${MAX_DOCS})`}
-            </Button>
+            />
           </div>
         </>
       )}

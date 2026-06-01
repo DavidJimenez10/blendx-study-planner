@@ -18,9 +18,12 @@ class _MockOpenAIClient:
     last_prompt: str | None = None
     embedding_to_return: list[float] | None = None
     chat_response: str = ""
+    generate_tasks_fn: object = None
 
     def generate_tasks(self, prompt, response_model):
         self.last_prompt = prompt
+        if self.generate_tasks_fn:
+            return self.generate_tasks_fn(prompt, response_model)
         return self.tasks_to_return
 
     def generate_embedding(self, text):
@@ -50,6 +53,7 @@ def client(monkeypatch):
     _mock_llm.last_prompt = None
     _mock_llm.embedding_to_return = None
     _mock_llm.chat_response = ""
+    _mock_llm.generate_tasks_fn = None
 
     def _override_get_db():
         db = _TestingSession()
@@ -76,4 +80,19 @@ def plan(client):
     return client.post(
         "/plans",
         json={"user_id": user["id"], "goal": "Learn Python", "hours_per_week": 10.0},
+    ).json()
+
+
+@pytest.fixture
+def plan_for_agent(client):
+    user = client.post("/users", json={"name": "AgentUser"}).json()
+    return client.post(
+        "/plans",
+        json={
+            "user_id": user["id"],
+            "goal": "Master React 18",
+            "hours_per_week": 10.0,
+            "target_date": "2026-09-01",
+            "constraints": "All tasks must include practical exercises",
+        },
     ).json()

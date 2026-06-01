@@ -1,6 +1,7 @@
-from typing import Generator
+from typing import Annotated, Generator
 
 import pgvector.sqlalchemy  # noqa: F401 — register pgvector type
+from fastapi import Depends
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -16,3 +17,6 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+DBDep = Annotated[Session, Depends(get_db)]

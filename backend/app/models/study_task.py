@@ -12,5 +12,6 @@ class StudyTask(Base):
     title = Column(String, nullable=False)
     estimated_hours = Column(Float, nullable=False)
     completed = Column(Boolean, nullable=False, default=False)
+    subtopic = Column(String, nullable=True, default="general")
 
     plan = relationship("StudyPlan", back_populates="tasks")

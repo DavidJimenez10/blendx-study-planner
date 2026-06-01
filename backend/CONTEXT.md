@@ -21,8 +21,12 @@ _Avoid_: Encrypted password
 ### Study Plans
 
 **Study Plan**:
-A learning goal created by a user with a target weekly commitment in hours. May include an optional description and target completion date.
+A learning goal created by a user with a target weekly commitment in hours. May include an optional description, target completion date, and constraints.
 _Avoid_: Course, curriculum, learning path
+
+**Constraints**:
+An open text field on the Study Plan where the user specifies requirements for task generation (e.g. "all tasks must have practical exercises, avoid advanced concepts"). Used by both Breakdown and Agentic Planning generation prompts.
+_Avoid_: Rules, limitations, preferences
 
 **Goal**:
 A short string describing what the user wants to learn or achieve (e.g. "AWS Solutions Architect").
@@ -35,7 +39,7 @@ _Avoid_: Weekly commitment, study load
 ### Study Tasks
 
 **Study Task**:
-A concrete action item within a study plan. Has a title, estimated hours, and a completion flag.
+A concrete action item within a study plan. Has a title, estimated hours, a completion flag, and an optional subtopic grouping. Tasks created via Agentic Planning carry their specific Subtopic; tasks created manually or via the simple generate-tasks endpoint default to "general".
 _Avoid_: Todo, assignment, item, step, subtask
 
 **Estimated Hours**:
@@ -59,6 +63,28 @@ _Avoid_: AI model, GPT, chatbot
 **max_tasks**:
 An optional integer parameter on the generate-tasks request that caps the number of tasks the LLM may produce. When omitted, the LLM autonomously decides the task count.
 _Avoid_: task_limit, count, num_tasks
+
+### Agentic Planning
+
+**Agentic Planning**:
+A multi-step Human-in-the-Loop (HITL) process where an LLM agent first breaks down a Study Plan's Goal into Subtopics (Phase 1: Breakdown), lets the user review and edit them (Phase 2: Client-side approval), then iteratively generates and validates Study Tasks per Subtopic using a LangGraph graph (Phase 3: Generation). Coexists with the simpler single-call Task Generation.
+_Avoid_: AI planning, auto-planner, smart generation
+
+**Subtopic**:
+A thematic subdivision of a Study Plan's Goal (e.g. "Hooks", "Context API" for "Aprender React 18"). Has a name, description, and suggested_hours. Generated during Breakdown, editable by the user, and used to group Study Tasks during generation.
+_Avoid_: Module, chapter, unit, section
+
+**Breakdown**:
+Phase 1 of Agentic Planning. A single fast LLM call using Structured Outputs (`instructor`) that decomposes the Goal into a list of Subtopics, considering the plan's Constraints. Returns JSON via `POST /plans/{id}/agent/breakdown`.
+_Avoid_: Decomposition, topic extraction, goal splitting
+
+**Guardrail**:
+A LangGraph node that validates generated tasks against the Subtopic's suggested_hours (with 20% tolerance) and the plan's Hours Per Week. If limits are exceeded, it writes a corrective Feedback Loop message and triggers a retry (max 3 retries per Subtopic).
+_Avoid_: Validator, checker, verifier
+
+**Feedback Loop**:
+A corrective message produced by the Guardrail when generated tasks don't meet constraints, fed back to the LLM generation node to guide regeneration.
+_Avoid_: Correction note, error message, retry hint
 
 ### Plan Documents
 

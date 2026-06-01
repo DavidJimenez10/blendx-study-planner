@@ -1,13 +1,23 @@
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 
+from ...schemas.agent import AgentGenerateRequest, BreakdownResponse
 from ...schemas.study_plan import StudyPlanCreate, StudyPlanRead, StudyPlanUpdate
 from ...schemas.study_task import StudyTaskCreate, StudyTaskRead, StudyTaskUpdate
 from ...schemas.task_generation import GenerateTasksRequest, GenerateTasksResponse
 from ..deps import (
+    AgentServiceDep,
     GenerationServiceDep,
     PlanServiceDep,
     TaskServiceDep,
 )
+
+SSEMediaType = "text/event-stream"
+
+
+class AgentSSEResponse(StreamingResponse):
+    media_type = SSEMediaType
+
 
 router = APIRouter(prefix="/plans", tags=["plans"])
 
@@ -58,3 +68,14 @@ def generate_tasks(
     data: GenerateTasksRequest = GenerateTasksRequest(),
 ):
     return svc.generate_tasks(plan_id, data)
+
+
+@router.post("/{plan_id}/agent/breakdown", response_model=BreakdownResponse)
+def agent_breakdown(plan_id: int, svc: AgentServiceDep):
+    return svc.perform_breakdown(plan_id)
+
+
+@router.post("/{plan_id}/agent/generate", response_class=AgentSSEResponse)
+def agent_generate(plan_id: int, data: AgentGenerateRequest, svc: AgentServiceDep):
+    for event in svc.execute_planning_graph(plan_id, data):
+        yield event
