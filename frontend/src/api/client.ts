@@ -123,6 +123,41 @@ export type ChatResponse = {
   sources: ChatSource[];
 };
 
+export type Subtopic = {
+  name: string;
+  description: string;
+  suggested_hours: number;
+};
+
+export type BreakdownResponse = {
+  subtopics: Subtopic[];
+};
+
+export type AgentGenerateRequest = {
+  approved_subtopics: Subtopic[];
+};
+
+export type TaskDraft = {
+  title: string;
+  estimated_hours: number;
+};
+
+export type AgentSSEEvent =
+  | { event: "planning_started"; data: { subtopic_count: number } }
+  | {
+      event: "subtopic_started";
+      data: { subtopic: string; index: number; total: number };
+    }
+  | {
+      event: "tasks_generated";
+      data: { task_count: number; tasks: TaskDraft[] };
+    }
+  | { event: "validation_retry"; data: { feedback: string } }
+  | { event: "warning"; data: { message: string } }
+  | { event: "tasks_saved"; data: { saved: boolean } }
+  | { event: "planning_complete"; data: { status: string } }
+  | { event: "error"; data: { message: string } };
+
 export const api = {
   register: (name: string, password: string) =>
     req<AuthResponse>("/auth/register", {
@@ -201,4 +236,71 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ question }),
     }),
+
+  agentBreakdown: (planId: number) =>
+    req<BreakdownResponse>(`/plans/${planId}/agent/breakdown`, {
+      method: "POST",
+    }),
+
+  agentGenerate: async function* (
+    planId: number,
+    approved_subtopics: Subtopic[],
+  ): AsyncGenerator<AgentSSEEvent> {
+    const token = getToken();
+    const res = await fetch(
+      `${BASE}/plans/${planId}/agent/generate`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ approved_subtopics }),
+      },
+    );
+    if (!res.ok) throw new Error(await res.text());
+    if (!res.body) throw new Error("No response body");
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let currentEvent = "";
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          buffer += decoder.decode();
+          break;
+        }
+        buffer += decoder.decode(value, { stream: true });
+
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            currentEvent = line.slice(7).trim();
+          } else if (line.startsWith("data: ")) {
+            const data = JSON.parse(line.slice(6));
+            yield { event: currentEvent, data } as AgentSSEEvent;
+          }
+        }
+      }
+
+      if (buffer) {
+        const lines = buffer.split("\n");
+        for (const line of lines) {
+          if (line.startsWith("event: ")) {
+            currentEvent = line.slice(7).trim();
+          } else if (line.startsWith("data: ")) {
+            const data = JSON.parse(line.slice(6));
+            yield { event: currentEvent, data } as AgentSSEEvent;
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  },
 };

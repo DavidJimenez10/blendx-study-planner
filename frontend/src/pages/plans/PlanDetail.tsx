@@ -15,15 +15,17 @@ import {
   IconCircleCheck,
   IconClock,
   IconPlus,
+  IconRobot,
   IconSparkles,
   IconTarget,
 } from "@tabler/icons-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, type StudyTask } from "../../api/client";
 import ChatPanel from "../../components/document/ChatPanel";
 import DocumentUpload from "../../components/document/DocumentUpload";
+import AgenticPlanningModal from "../../components/plan/AgenticPlanningModal";
 import AddTaskModal from "../../components/task/AddTaskModal";
 import TaskItem from "../../components/task/TaskItem";
 import styles from "./PlanDetail.module.css";
@@ -44,6 +46,10 @@ export default function PlanDetail() {
 
   const [addTaskOpened, { open: openAddTask, close: closeAddTask }] =
     useDisclosure(false);
+  const [
+    agenticOpened,
+    { open: openAgentic, close: closeAgentic },
+  ] = useDisclosure(false);
 
   const [genWarning, setGenWarning] = useState<string | null>(null);
 
@@ -101,6 +107,12 @@ export default function PlanDetail() {
   const isComplete = totalCount > 0 && completedCount === totalCount;
   const progressPct =
     totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+  const handleToggle = useCallback(
+    (taskId: number, completed: boolean) =>
+      toggleTask.mutate({ taskId, completed }),
+    [toggleTask.mutate],
+  );
 
   if (planLoading) {
     return (
@@ -222,6 +234,13 @@ export default function PlanDetail() {
                       ? "Generating\u2026"
                       : "Generate with AI"}
                   </Menu.Item>
+                  <Menu.Divider />
+                  <Menu.Item
+                    leftSection={<IconRobot size={14} />}
+                    onClick={openAgentic}
+                  >
+                    Agentic Planning
+                  </Menu.Item>
                 </Menu.Dropdown>
               </Menu>
             </Group>
@@ -292,9 +311,7 @@ export default function PlanDetail() {
                     <TaskItem
                       key={task.id}
                       task={task}
-                      onToggle={(taskId, completed) =>
-                        toggleTask.mutate({ taskId, completed })
-                      }
+                      onToggle={handleToggle}
                     />
                   ))}
                 </div>
@@ -313,6 +330,11 @@ export default function PlanDetail() {
       </main>
 
       <AddTaskModal opened={addTaskOpened} onClose={closeAddTask} planId={id} />
+      <AgenticPlanningModal
+        opened={agenticOpened}
+        onClose={closeAgentic}
+        planId={id}
+      />
     </div>
   );
 }
