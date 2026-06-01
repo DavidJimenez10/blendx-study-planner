@@ -1,20 +1,9 @@
-from typing import Annotated
+from fastapi import APIRouter
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-
-from ...core.database import get_db
 from ...schemas.auth import LoginInput, RegisterInput, TokenResponse
-from ...services.auth_service import AuthService
+from ..deps import AuthServiceDep
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-
-def get_auth_service(db: Session = Depends(get_db)) -> AuthService:
-    return AuthService(db)
-
-
-AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 
 
 @router.post("/register", response_model=TokenResponse, status_code=201)
