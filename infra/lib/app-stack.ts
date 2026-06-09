@@ -86,7 +86,7 @@ export class AppStack extends cdk.Stack {
     });
 
     const appSecret = new sm.Secret(this, 'AppSecret', {
-      secretName: 'blendx/app-secrets',
+      //secretName: 'blendx/app-secrets',
       description: 'Application secrets for BlendX Study Planner',
       encryptionKey: kmsKey,
       generateSecretString: {
