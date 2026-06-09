@@ -10,6 +10,8 @@ import * as kms from 'aws-cdk-lib/aws-kms';
 import * as sm from 'aws-cdk-lib/aws-secretsmanager';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 
 export interface AppStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
@@ -170,8 +172,8 @@ export class AppStack extends cdk.Stack {
     ]);
 
     taskDefinition.addContainer('AppContainer', {
-      //image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
-      image: ecs.ContainerImage.fromRegistry('hashicorp/http-echo:latest'),
+      image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
+      // image: ecs.ContainerImage.fromRegistry('hashicorp/http-echo:latest'),
       command: ['-listen=:8000', '-text={"status": "ok"}'],
       logging: ecs.LogDrivers.awsLogs({ streamPrefix: 'blendx', logGroup, mode: ecs.AwsLogDriverMode.BLOCKING }),
       environment: {
@@ -229,7 +231,26 @@ export class AppStack extends cdk.Stack {
 
     targetGroup.setAttribute('deregistration_delay.timeout_seconds', '30');
 
+    // ── CloudFront ──
+
+    const distribution = new cloudfront.Distribution(this, 'AlbDistribution', {
+      defaultBehavior: {
+        origin: new origins.LoadBalancerV2Origin(alb, {
+          protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+        }),
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+        cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+        originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      },
+    });
+
     // ── Outputs ──
+
+    new cdk.CfnOutput(this, 'ApiUrl', {
+      value: `https://${distribution.distributionDomainName}`,
+      description: 'CloudFront HTTPS URL — set as VITE_API_URL in Amplify',
+    });
 
     new cdk.CfnOutput(this, 'AlbDnsName', {
       value: alb.loadBalancerDnsName,
