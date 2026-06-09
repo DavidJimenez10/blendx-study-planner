@@ -31,6 +31,8 @@ jobs:
           docker build -t ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }} -t ${{ secrets.ECR_REPOSITORY }}:latest backend/
           docker push ${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
           docker push ${{ secrets.ECR_REPOSITORY }}:latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
   deploy:
     needs: build-and-push
@@ -69,3 +71,5 @@ jobs:
             --service ${{ secrets.ECS_SERVICE }} \
             --task-definition ${{ secrets.ECS_TASK_DEF_FAMILY }}:$NEW_REVISION \
             --force-new-deployment
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

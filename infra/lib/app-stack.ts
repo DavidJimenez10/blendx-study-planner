@@ -86,7 +86,7 @@ export class AppStack extends cdk.Stack {
     });
 
     const appSecret = new sm.Secret(this, 'AppSecret', {
-      secretName: 'blendx/app-secrets',
+      //secretName: 'blendx/app-secrets',
       description: 'Application secrets for BlendX Study Planner',
       encryptionKey: kmsKey,
       generateSecretString: {
@@ -171,7 +171,8 @@ export class AppStack extends cdk.Stack {
 
     taskDefinition.addContainer('AppContainer', {
       //image: ecs.ContainerImage.fromEcrRepository(repository, 'latest'),
-      image: ecs.ContainerImage.fromRegistry('amazon/amazon-ecs-sample'),
+      image: ecs.ContainerImage.fromRegistry('hashicorp/http-echo:latest'),
+      command: ['-listen=:8000', '-text={"status": "ok"}'],
       logging: ecs.LogDrivers.awsLogs({ streamPrefix: 'blendx', logGroup, mode: ecs.AwsLogDriverMode.BLOCKING }),
       environment: {
         DATABASE_URL: databaseUrl,
@@ -219,9 +220,9 @@ export class AppStack extends cdk.Stack {
       targets: [fargateService],
       healthCheck: {
         path: '/health',
-        interval: cdk.Duration.seconds(30),
+        interval: cdk.Duration.seconds(15),
         timeout: cdk.Duration.seconds(5),
-        healthyThresholdCount: 3,
+        healthyThresholdCount: 2,
         unhealthyThresholdCount: 3,
       },
     });
