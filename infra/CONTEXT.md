@@ -43,5 +43,11 @@ An AWS Amplify application connected to this GitHub repository. Builds the Vite 
 _Avoid_: Static hosting, S3 website
 
 **VITE_API_URL**:
-Environment variable set in the Amplify console to the ALB DNS. The frontend reads it via `import.meta.env.VITE_API_URL` and falls back to `/api` (Vite dev proxy). This is the bridge between the Amplify-hosted frontend and the ECS-hosted backend.
+Environment variable set in the Amplify console. Originally intended to point to the ALB DNS, but due to browser Mixed Content restrictions (HTTPS to HTTP), it must point to the CloudFront distribution URL (which proxies the ALB). The frontend reads it via `import.meta.env.VITE_API_URL` and falls back to `/api` (Vite dev proxy).
 _Avoid_: API endpoint, backend URL
+
+### CloudFront
+
+**CloudFront Distribution**:
+A manually created CDN distribution acting as an HTTPS bridge. Since the MVP lacks a custom domain to attach an SSL certificate to the ALB, CloudFront provides a default `https://dXXXX.cloudfront.net` domain that proxies traffic to the HTTP ALB, resolving Mixed Content errors.
+_Avoid_: Edge cache (in this context, caching is disabled)
